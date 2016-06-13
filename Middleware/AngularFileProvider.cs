@@ -1,9 +1,8 @@
-﻿using Microsoft.AspNet.Builder;
-using Microsoft.AspNet.Http;
+﻿using Microsoft.AspNetCore.Http;
 using System;
 using System.Threading.Tasks;
-using Microsoft.AspNet.StaticFiles;
 using System.Collections.Generic;
+using Microsoft.Extensions.FileProviders;
 
 namespace AngularASPNext
 {
@@ -20,7 +19,7 @@ namespace AngularASPNext
 
         public async Task Invoke(HttpContext context)
         {
-            if(!context.Request.Method.Equals("GET", StringComparison.InvariantCultureIgnoreCase))
+            if(!context.Request.Method.Equals("GET", StringComparison.CurrentCultureIgnoreCase))
             {
                 await Next(context);
                 return;
@@ -33,11 +32,16 @@ namespace AngularASPNext
             }
 
             context.Response.ContentType = "text/html";
-            foreach(var indexFile in IndexFiles)
+            var fileProvider = new PhysicalFileProvider(System.IO.Directory.GetCurrentDirectory());
+
+            foreach (var indexFile in IndexFiles)
             {
                 try
                 {
-                    await context.Response.SendFileAsync(indexFile);
+                    var file = fileProvider.GetFileInfo(indexFile);
+                    if (!file.Exists) continue;
+
+                    await context.Response.SendFileAsync(file);
                     return;
                 }
                 catch
