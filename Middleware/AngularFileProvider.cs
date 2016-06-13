@@ -10,11 +10,13 @@ namespace AngularASPNext
     {
         protected readonly RequestDelegate Next;
         protected readonly IEnumerable<string> IndexFiles;
+        protected readonly IFileProvider FileProvider;
 
-        public AngularFileProviderMiddleware(RequestDelegate next, IEnumerable<string> indexFiles)
+        public AngularFileProviderMiddleware(RequestDelegate next, IFileProvider fileProvider, IEnumerable<string> indexFiles)
         {
             Next = next;
             IndexFiles = indexFiles;
+            FileProvider = fileProvider;
         }
 
         public async Task Invoke(HttpContext context)
@@ -32,13 +34,12 @@ namespace AngularASPNext
             }
 
             context.Response.ContentType = "text/html";
-            var fileProvider = new PhysicalFileProvider(System.IO.Directory.GetCurrentDirectory());
 
             foreach (var indexFile in IndexFiles)
             {
                 try
                 {
-                    var file = fileProvider.GetFileInfo(indexFile);
+                    var file = FileProvider.GetFileInfo(indexFile);
                     if (!file.Exists) continue;
 
                     await context.Response.SendFileAsync(file);
